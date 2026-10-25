@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="50%" stop-color="#1e1138" />
+      <stop offset="100%" stop-color="#081b2e" />
+    </linearGradient>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="128" fill="url(#bg)" />
+  <rect width="508" height="508" x="2" y="2" rx="126" fill="none" stroke="#8b5cf6" stroke-width="4" stroke-opacity="0.3" />
+
+  <!-- StudyDuo Chat Bubbles -->
+  <!-- Left Bubble: Chamgadar / Admin (Purple) -->
+  <path d="M140 180 C140 146 170 120 210 120 L300 120 C340 120 370 146 370 180 L370 240 C370 274 340 300 300 300 L210 300 L160 340 L170 300 L160 300 C148 300 140 290 140 278 Z" fill="url(#grad1)" opacity="0.9" />
+
+  <!-- Right Bubble: ChatGPT / Partner (Cyan) -->
+  <path d="M210 240 C210 216 230 196 260 196 L330 196 C360 196 380 216 380 240 L380 290 C380 314 360 334 330 334 L310 334 L295 365 L275 334 L260 334 C232 334 210 314 210 290 Z" fill="url(#grad2)" />
+
+  <!-- Monogram Dots or Letters -->
+  <circle cx="215" cy="205" r="14" fill="#ffffff" />
+  <circle cx="260" cy="205" r="14" fill="#ffffff" />
+  <circle cx="305" cy="205" r="14" fill="#ffffff" />
+
+  <circle cx="280" cy="265" r="10" fill="#ffffff" />
+  <circle cx="310" cy="265" r="10" fill="#ffffff" />
+  <circle cx="340" cy="265" r="10" fill="#ffffff" />
+</svg>

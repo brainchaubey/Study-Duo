@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all unknown paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthorizedParticipant(senderId) {
+      return senderId in ['chamgadar', 'chatgpt'];
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['id', 'conversationId', 'senderId', 'senderName', 'text', 'timestamp'])
+        && data.keys().hasOnly(['id', 'conversationId', 'senderId', 'senderName', 'text', 'timestamp', 'createdAt'])
+        && data.id is string && isValidId(data.id)
+        && data.conversationId is string && data.conversationId == 'studyduo_private_v1'
+        && data.senderId is string && isAuthorizedParticipant(data.senderId)
+        && data.senderName is string && data.senderName.size() > 0 && data.senderName.size() <= 50
+        && data.text is string && data.text.size() > 0 && data.text.size() <= 2000
+        && data.timestamp is string && data.timestamp.size() <= 40;
+    }
+
+    function isValidStudyProgress(data) {
+      return data.keys().hasAll(['participantId'])
+        && data.participantId is string && isAuthorizedParticipant(data.participantId)
+        && (!('completedChapters' in data) || data.completedChapters is list)
+        && (!('quizScores' in data) || data.quizScores is map);
+    }
+
+    // Messages collection: restricted to authorized participants
+    match /messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() 
+        && isValidId(messageId)
+        && isValidMessage(request.resource.data);
+      allow update, delete: if false; // Private chat messages are immutable once recorded
+    }
+
+    // Study progress collection: per participant
+    match /study_progress/{participantId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+        && isValidId(participantId)
+        && isAuthorizedParticipant(participantId)
+        && isValidStudyProgress(request.resource.data);
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "StudyDuo",
+  "description": "Private two-person secure chat and CBSE Class 10 syllabus tracker with chapter-wise MCQ tests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

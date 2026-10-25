@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A private chat message between the two authorized StudyDuo participants",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique message ID"
+        },
+        "conversationId": {
+          "type": "string",
+          "description": "Identifier for the private 2-person chat room"
+        },
+        "senderId": {
+          "type": "string",
+          "enum": ["chamgadar", "chatgpt"],
+          "description": "Identifier of the sender"
+        },
+        "senderName": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Display name of the sender"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Chat message text"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp string"
+        }
+      },
+      "required": ["id", "conversationId", "senderId", "senderName", "text", "timestamp"]
+    },
+    "StudyProgress": {
+      "title": "StudyProgress",
+      "description": "CBSE Class 10 syllabus completion and MCQ quiz records",
+      "type": "object",
+      "properties": {
+        "participantId": {
+          "type": "string",
+          "description": "Participant identifier"
+        },
+        "completedChapters": {
+          "type": "array",
+          "description": "List of completed chapter IDs"
+        },
+        "quizScores": {
+          "type": "object",
+          "description": "Map of chapter or subject key to score records"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp when progress was updated"
+        }
+      },
+      "required": ["participantId"]
+    }
+  },
+  "firestore": {
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Private chat message collection"
+    },
+    "/study_progress/{participantId}": {
+      "schema": "StudyProgress",
+      "description": "Per-participant CBSE Class 10 syllabus progress and test history"
+    }
+  }
+}
