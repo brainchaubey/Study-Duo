@@ -8,7 +8,7 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isProd = process.env.NODE_ENV === 'production';
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Ensure storage directory exists for resilient persistence
 const DATA_DIR = path.join(__dirname, 'data');
@@ -200,6 +200,18 @@ function requireAuth(req: express.Request, res: express.Response, next: express.
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+
+  // Enable CORS for external frontends (e.g. GitHub Pages)
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
 
   // --- API ROUTES ---
 
