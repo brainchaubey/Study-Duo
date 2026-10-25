@@ -1,29 +1,38 @@
+
 import { useEffect, useState } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
 }
 
 export function usePWAInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+
   const [isInstalled, setIsInstalled] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
-    // Detect standalone mode (already installed and opened as app)
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
-    setIsInstalled(isStandalone);
+    const checkInstalled = () => {
+      const standalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as Navigator & { standalone?: boolean })
+          .standalone === true;
 
-    // Detect Android device
-    const ua = window.navigator.userAgent.toLowerCase();
-    setIsAndroid(/android/.test(ua));
+      setIsInstalled(standalone);
+    };
 
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    checkInstalled();
+
+    setIsAndroid(/android/i.test(navigator.userAgent));
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
     };
 
     const handleAppInstalled = () => {
@@ -31,29 +40,68 @@ export function usePWAInstall() {
       setDeferredPrompt(null);
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener(
+      'beforeinstallprompt',
+      handleBeforeInstallPrompt
+    );
+
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt
+      );
+
+      window.removeEventListener(
+        'appinstalled',
+        handleAppInstalled
+      );
     };
   }, []);
 
   const install = async () => {
-    if (!deferredPrompt) return false;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-      setDeferredPrompt(null);
-      return true;
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+
+        const { outcome } = await deferredPrompt.userChoice;
+
+        setDeferredPrompt(null);
+
+        if (outcome === 'accepted') {
+          setIsInstalled(true);
+          return true;
+        }
+
+        return false;
+      } catch {
+        // If the native prompt fails, show manual instructions.
+      }
     }
+
+    if (isAndroid) {
+      window.alert(
+        'Install StudyDuo on your Android phone:\n\n' +
+        '1. Open StudyDuo in Google Chrome.\n' +
+        '2. Tap the three dots (⋮) in the top-right corner.\n' +
+        '3. Tap "Install app" or "Add to Home screen".\n' +
+        '4. Confirm by tapping Install or Add.\n\n' +
+        'If neither option appears, Chrome is not currently ' +
+        'offering installation on this device.'
+      );
+    } else {
+      window.alert(
+        'Open StudyDuo in Google Chrome on your Android phone ' +
+        'to install it.'
+      );
+    }
+
     return false;
   };
 
   return {
-    isInstallable: !!deferredPrompt,
+    isInstallable: !!deferredPrompt || (isAndroid && !isInstalled),
     isInstalled,
     isAndroid,
     install,
