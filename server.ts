@@ -454,9 +454,12 @@ async function startServer() {
       server: { middlewareMode: true },
       appType: 'spa',
     });
+    app.get('/', (_req, res) => res.redirect('/Study-Duo/'));
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(__dirname, 'dist');
+    app.get('/', (_req, res) => res.redirect('/Study-Duo/'));
+    app.use('/Study-Duo', express.static(distPath));
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));

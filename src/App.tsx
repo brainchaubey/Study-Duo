@@ -11,6 +11,7 @@ import { HomeView } from './components/HomeView';
 import { ChatView } from './components/ChatView';
 import { StudyView } from './components/StudyView';
 import { testFirestoreConnection } from './lib/firebase';
+import { getApiUrl } from './lib/api';
 
 export default function App() {
   // Navigation: 'home' | 'chat' | 'study'
@@ -40,16 +41,32 @@ export default function App() {
   // 2. Load study progress for current participant (or default Chamgadar)
   useEffect(() => {
     const participantId = session ? session.participant.id : 'chamgadar';
-    fetch(`/api/study/progress?participant=${participantId}`)
+    fetch(getApiUrl(`/api/study/progress?participant=${participantId}`))
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.progress) {
           setCompletedChapters(data.progress.completedChapters || []);
           setQuizScores(data.progress.quizScores || {});
+        } else {
+          try {
+            const saved = localStorage.getItem(`studyduo_${participantId}`);
+            if (saved) {
+              const parsed = JSON.parse(saved);
+              setCompletedChapters(parsed.completedChapters || []);
+              setQuizScores(parsed.quizScores || {});
+            }
+          } catch {}
         }
       })
-      .catch((err) => {
-        console.warn('Could not load study progress:', err);
+      .catch(() => {
+        try {
+          const saved = localStorage.getItem(`studyduo_${participantId}`);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            setCompletedChapters(parsed.completedChapters || []);
+            setQuizScores(parsed.quizScores || {});
+          }
+        } catch {}
       });
   }, [session]);
 
@@ -63,7 +80,7 @@ export default function App() {
   const handleLockChat = async () => {
     if (session) {
       try {
-        await fetch('/api/chat/auth/logout', {
+        await fetch(getApiUrl('/api/chat/auth/logout'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -89,10 +106,18 @@ export default function App() {
 
     setCompletedChapters(nextCompleted);
 
-    // Save to backend
+    // Save offline backup
     const participantId = session ? session.participant.id : 'chamgadar';
     try {
-      await fetch('/api/study/progress', {
+      localStorage.setItem(
+        `studyduo_${participantId}`,
+        JSON.stringify({ completedChapters: nextCompleted, quizScores })
+      );
+    } catch {}
+
+    // Save to backend if connected
+    try {
+      await fetch(getApiUrl('/api/study/progress'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +126,7 @@ export default function App() {
         }),
       });
     } catch (err) {
-      console.error('Failed to sync chapter progress:', err);
+      console.warn('Backend sync failed, saved locally:', err);
     }
   };
 
@@ -120,7 +145,14 @@ export default function App() {
 
     const participantId = session ? session.participant.id : 'chamgadar';
     try {
-      await fetch('/api/study/progress', {
+      localStorage.setItem(
+        `studyduo_${participantId}`,
+        JSON.stringify({ completedChapters, quizScores: updatedScores })
+      );
+    } catch {}
+
+    try {
+      await fetch(getApiUrl('/api/study/progress'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,7 +162,8 @@ export default function App() {
       });
       showToast(`Quiz score saved: ${score}/${total}`);
     } catch (err) {
-      console.error('Failed to sync quiz score:', err);
+      console.warn('Backend sync failed, saved locally:', err);
+      showToast(`Quiz score saved: ${score}/${total}`);
     }
   };
 

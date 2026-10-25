@@ -15,6 +15,7 @@ import {
   UserCheck
 } from 'lucide-react';
 import { AuthSession, ChatMessage, ParticipantId } from '../types';
+import { getApiUrl } from '../lib/api';
 
 interface ChatViewProps {
   session: AuthSession | null;
@@ -69,7 +70,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setChatError(null);
 
     // Fetch existing messages from free container server memory
-    fetch('/api/chat/messages', {
+    fetch(getApiUrl('/api/chat/messages'), {
       headers: {
         Authorization: `Bearer ${session.token}`,
       },
@@ -99,7 +100,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
       });
 
     // Real-Time SSE Connection for cross-device instant messaging
-    const sseUrl = `/api/chat/stream?token=${encodeURIComponent(session.token)}`;
+    const sseUrl = getApiUrl(`/api/chat/stream?token=${encodeURIComponent(session.token)}`);
     const eventSource = new EventSource(sseUrl);
     eventSourceRef.current = eventSource;
 
@@ -151,11 +152,17 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setLoginError(null);
 
     try {
-      const res = await fetch('/api/chat/auth/login', {
+      const res = await fetch(getApiUrl('/api/chat/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: targetAccount, password: password.trim() }),
       });
+
+      if (res.status === 404) {
+        throw new Error(
+          'Chat server unreachable. GitHub Pages only hosts static files and cannot run the Node backend. Use your live Cloud Run URL or configure VITE_API_URL.'
+        );
+      }
 
       const data = await res.json();
 
@@ -186,7 +193,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setChatError(null);
 
     try {
-      const res = await fetch('/api/chat/messages', {
+      const res = await fetch(getApiUrl('/api/chat/messages'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -228,7 +235,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
     setIsClearingChat(true);
 
     try {
-      const res = await fetch('/api/chat/messages/clear', {
+      const res = await fetch(getApiUrl('/api/chat/messages/clear'), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${session.token}`,

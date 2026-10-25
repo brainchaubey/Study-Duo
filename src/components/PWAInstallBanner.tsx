@@ -13,7 +13,7 @@ export const PWAInstallBanner: React.FC = () => {
   }
 
   const handleShareLink = async () => {
-    const url = window.location.origin;
+    const url = window.location.href;
     if (navigator.share) {
       try {
         await navigator.share({
